@@ -1,0 +1,7 @@
+anthropic
+supabase
+openai
+python-dotenv
+truststore
+fastapi
+uvicorn

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mnemosyne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0a0a0a;
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────── */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 64px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+.hdr-left {
+  font-family: 'JetBrains Mono', monospace;
+  color: #2563EB;
+  font-size: 20px;
+  font-weight: 700;
+}
+.hdr-right {
+  font-family: 'JetBrains Mono', monospace;
+  color: #444;
+  font-size: 13px;
+}
+
+/* ── Grid ───────────────────────────────────────── */
+#grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.col {
+  background: #0d0d0d;
+  overflow-y: auto;
+  padding: 32px;
+  min-height: 0;
+}
+#col-input { border-right: 1px solid #1a1a1a; }
+#col-log   { border-right: 1px solid #1a1a1a; }
+
+/* ── Column headers ──────────────────────────────── */
+.col-header {
+  font-family: 'JetBrains Mono', monospace;
+  color: #2563EB;
+  font-size: 15px;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+}
+
+/* ── Form elements ───────────────────────────────── */
+textarea, input[type="text"] {
+  display: block;
+  width: 100%;
+  background: #111;
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  border: 1px solid #1a1a1a;
+  border-radius: 2px;
+  padding: 12px 14px;
+  resize: none;
+}
+textarea::placeholder, input[type="text"]::placeholder {
+  color: #555;
+}
+textarea:focus, input[type="text"]:focus {
+  outline: none;
+  border-bottom-color: #2563EB;
+}
+
+/* ── Buttons ─────────────────────────────────────── */
+button {
+  display: block;
+  width: 100%;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  background: #2563EB;
+  color: #0a0a0a;
+  border: 1px solid #2563EB;
+  border-radius: 2px;
+  padding: 14px;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms;
+  margin-top: 12px;
+}
+button:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+button[disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* ── Divider ─────────────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid #1a1a1a;
+  margin: 32px 0;
+}
+
+/* ── Answer block ────────────────────────────────── */
+#answer-block {
+  display: none;
+  color: #ccc;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  line-height: 1.8;
+  margin-top: 20px;
+  border-left: 3px solid #2563EB;
+  padding-left: 16px;
+}
+
+/* ── Log ─────────────────────────────────────────── */
+.log-line {
+  margin-bottom: 6px;
+  line-height: 1.7;
+  font-size: 14px;
+}
+.log-ts {
+  font-family: 'JetBrains Mono', monospace;
+  color: #444;
+}
+.log-agent {
+  font-family: 'JetBrains Mono', monospace;
+  color: #2563EB;
+  display: inline-block;
+  min-width: 90px;
+}
+.log-msg {
+  font-family: 'Space Grotesk', sans-serif;
+  color: #888;
+}
+.log-msg.error {
+  color: #ff4444;
+}
+
+/* ── Contacts header ─────────────────────────────── */
+#contacts-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+}
+#contacts-top .col-header {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+#contacts-count {
+  font-family: 'JetBrains Mono', monospace;
+  color: #555;
+  font-size: 13px;
+}
+
+/* ── Contact rows ────────────────────────────────── */
+.contact-row {
+  position: relative;
+  padding: 14px 0;
+  border-bottom: 1px solid #151515;
+  cursor: pointer;
+}
+.contact-row:last-child {
+  border-bottom: none;
+}
+.contact-delete {
+  position: absolute;
+  top: 14px;
+  right: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #555;
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+  padding: 3px 6px;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  line-height: 1.4;
+}
+.contact-delete:hover { color: #ff4444; border-color: #ff4444; }
+.contact-main {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.contact-name {
+  font-family: 'Space Grotesk', sans-serif;
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+}
+.contact-company {
+  font-family: 'Space Grotesk', sans-serif;
+  color: #666;
+  font-size: 15px;
+}
+.contact-date {
+  font-family: 'JetBrains Mono', monospace;
+  color: #444;
+  font-size: 13px;
+  margin-top: 4px;
+}
+.contact-interactions {
+  display: none;
+  margin-top: 10px;
+  padding-left: 14px;
+  border-left: 1px solid #1a1a1a;
+}
+.contact-interactions.open {
+  display: block;
+}
+.interaction-item {
+  font-family: 'Space Grotesk', sans-serif;
+  color: #888;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+/* ── Empty state ─────────────────────────────────── */
+.empty-state {
+  font-family: 'JetBrains Mono', monospace;
+  color: #333;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 64px;
+  line-height: 2.2;
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <span class="hdr-left">paul@mnemosyne:~$</span>
+  <span class="hdr-right">// relationship memory layer</span>
+</div>
+
+<div id="grid">
+
+  <!-- Column 1: Input -->
+  <div class="col" id="col-input">
+    <div class="col-header">&gt; input</div>
+
+    <textarea id="ingest-text" rows="6" placeholder="Had a call with Sarah Chen from Lazard..."></textarea>
+    <button id="ingest-btn">$ run intake</button>
+
+    <hr class="divider">
+
+    <input type="text" id="query-input" placeholder="Who do I know at bulge brackets?">
+    <button id="query-btn">$ run query</button>
+    <div id="answer-block"></div>
+  </div>
+
+  <!-- Column 2: Agent Log -->
+  <div class="col" id="col-log">
+    <div class="col-header">&gt; agent log</div>
+    <div id="log"></div>
+  </div>
+
+  <!-- Column 3: Contacts -->
+  <div class="col" id="col-contacts">
+    <div id="contacts-top">
+      <span class="col-header">&gt; contacts</span>
+      <span id="contacts-count">0 contacts</span>
+    </div>
+    <div id="contacts-list"></div>
+  </div>
+
+</div>
+
+<script>
+const logEl  = document.getElementById('log');
+const colLog = document.getElementById('col-log');
+
+function ts() {
+  const d   = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function addLog(agent, msg, err) {
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML =
+    `<span class="log-ts">[${ts()}]</span> ` +
+    `<span class="log-agent">${agent}</span>  ` +
+    `<span class="log-msg${err ? ' error' : ''}">${msg}</span>`;
+  logEl.appendChild(line);
+  colLog.scrollTop = colLog.scrollHeight;
+}
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+addLog('system', 'ready. waiting for input.');
+
+// ── Ingest ────────────────────────────────────────────────────
+const ingestBtn  = document.getElementById('ingest-btn');
+const ingestText = document.getElementById('ingest-text');
+
+ingestBtn.addEventListener('click', async () => {
+  const text = ingestText.value.trim();
+  if (!text) return;
+
+  ingestBtn.textContent = '$ running...';
+  ingestBtn.disabled    = true;
+  addLog('intake', '→ parsing input...');
+
+  try {
+    const res = await fetch('/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { name, company } = await res.json();
+
+    addLog('intake', `✓ extracted ${name} @ ${company}`);
+    await wait(80);
+    addLog('memory', '→ checking contacts...');
+    await wait(80);
+    addLog('memory', '✓ contact stored');
+    await wait(80);
+    addLog('memory', '→ generating embedding...');
+    await wait(80);
+    addLog('memory', '✓ memory written to Supabase');
+
+    ingestText.value = '';
+    await loadContacts();
+  } catch (e) {
+    addLog('system', `✗ ${e.message}`, true);
+  } finally {
+    ingestBtn.textContent = '$ run intake';
+    ingestBtn.disabled    = false;
+  }
+});
+
+// ── Query ─────────────────────────────────────────────────────
+const queryBtn   = document.getElementById('query-btn');
+const queryInput = document.getElementById('query-input');
+const answerEl   = document.getElementById('answer-block');
+
+queryBtn.addEventListener('click', async () => {
+  const q = queryInput.value.trim();
+  if (!q) return;
+
+  queryBtn.textContent = '$ running...';
+  queryBtn.disabled    = true;
+  addLog('retrieval', '→ embedding query...');
+
+  try {
+    const res = await fetch(`/query?q=${encodeURIComponent(q)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { answer } = await res.json();
+
+    addLog('retrieval', '→ searching vector store...');
+    await wait(80);
+    addLog('retrieval', '✓ answer ready');
+
+    answerEl.textContent   = answer;
+    answerEl.style.display = 'block';
+  } catch (e) {
+    addLog('system', `✗ ${e.message}`, true);
+  } finally {
+    queryBtn.textContent = '$ run query';
+    queryBtn.disabled    = false;
+  }
+});
+
+queryInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') queryBtn.click();
+});
+
+// ── Contacts ──────────────────────────────────────────────────
+async function loadContacts() {
+  try {
+    const res = await fetch('/contacts');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    renderContacts(await res.json());
+  } catch (e) {
+    addLog('system', `✗ ${e.message}`, true);
+  }
+}
+
+function renderContacts(contacts) {
+  const list  = document.getElementById('contacts-list');
+  const count = document.getElementById('contacts-count');
+  count.textContent = `${contacts.length} contacts`;
+  list.innerHTML = '';
+
+  if (contacts.length === 0) {
+    list.innerHTML = '<div class="empty-state">no contacts yet.<br>$ run intake to add one.</div>';
+    return;
+  }
+
+  contacts.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'contact-row';
+
+    const lastDate = c.last_contact || (c.updated_at ? c.updated_at.split('T')[0] : '—');
+
+    const interHtml = (c.interactions || []).map(i => {
+      const parts = [i.date, i.topic, i.summary].filter(Boolean).join(' — ');
+      return `<div class="interaction-item">${parts}</div>`;
+    }).join('');
+
+    row.innerHTML = `
+      <span class="contact-delete">delete</span>
+      <div class="contact-main">
+        <span class="contact-name">${c.name || ''}</span>
+        <span class="contact-company">${c.company || ''}</span>
+      </div>
+      <div class="contact-date">${lastDate}</div>
+      ${interHtml ? `<div class="contact-interactions">${interHtml}</div>` : ''}
+    `;
+
+    const ints = row.querySelector('.contact-interactions');
+    if (ints) {
+      row.addEventListener('click', () => ints.classList.toggle('open'));
+    }
+
+    row.querySelector('.contact-delete').addEventListener('click', async e => {
+      e.stopPropagation();
+      if (!confirm(`Delete ${c.name} (${c.company})?\n\nThis removes the contact, all interactions and memories.`)) return;
+      addLog('system', `→ deleting ${c.name}...`);
+      try {
+        const res = await fetch(`/contacts/${c.id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        addLog('system', `✓ deleted ${c.name}`);
+        await loadContacts();
+      } catch (err) {
+        addLog('system', `✗ ${err.message}`, true);
+      }
+    });
+
+    list.appendChild(row);
+  });
+}
+
+loadContacts();
+</script>
+</body>
+</html>
