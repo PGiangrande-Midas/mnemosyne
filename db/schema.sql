@@ -1,7 +1,14 @@
--- Enable pgvector (run once in Supabase SQL editor)
+-- Mnemosyne working tables. These live in the shared Pantheon Supabase
+-- project alongside the Metis `runs` table (one project, many tables).
+--
+-- Security posture: RLS stays ON and anon gets NO access. Mnemosyne reads and
+-- writes with the service_role key, which bypasses RLS, so its operations work
+-- while contact and interaction data stays private, mirroring how `runs` is
+-- protected. Run once in the Supabase SQL editor. Idempotent: safe to re-run.
+
 create extension if not exists vector;
 
-create table if not exists contacts (
+create table if not exists public.contacts (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   company text,
@@ -13,9 +20,9 @@ create table if not exists contacts (
   updated_at timestamp default now()
 );
 
-create table if not exists interactions (
+create table if not exists public.interactions (
   id uuid primary key default gen_random_uuid(),
-  contact_id uuid references contacts(id),
+  contact_id uuid references public.contacts(id),
   date date,
   topic text,
   summary text,
@@ -23,28 +30,31 @@ create table if not exists interactions (
   sentiment text
 );
 
-create table if not exists memories (
+create table if not exists public.memories (
   id uuid primary key default gen_random_uuid(),
-  contact_id uuid references contacts(id),
+  contact_id uuid references public.contacts(id),
   content text,
   embedding vector(1536),
   created_at timestamp default now()
 );
 
 create index if not exists memories_embedding_idx
-on memories using ivfflat (embedding vector_cosine_ops)
-with (lists = 100);
+  on public.memories using ivfflat (embedding vector_cosine_ops)
+  with (lists = 100);
 
--- Disable RLS for private dev (anon key needs full access)
-alter table contacts disable row level security;
-alter table interactions disable row level security;
-alter table memories disable row level security;
+-- RLS ON, no policies, no anon access. Only service_role (which bypasses RLS)
+-- can read or write. Do NOT disable RLS or grant anon here: that would expose
+-- contact data in the shared project.
+alter table public.contacts     enable row level security;
+alter table public.interactions enable row level security;
+alter table public.memories     enable row level security;
 
--- Required for cosine similarity search via Supabase RPC
-grant usage on schema public to anon;
-grant select on memories to anon;
+revoke all on public.contacts     from anon, authenticated;
+revoke all on public.interactions from anon, authenticated;
+revoke all on public.memories     from anon, authenticated;
 
-create or replace function match_memories(
+-- Cosine-similarity helper. Callable only by the service role, not anon.
+create or replace function public.match_memories(
   query_embedding vector(1536),
   match_count int default 5
 )
@@ -58,9 +68,10 @@ language sql stable
 as $$
   select id, contact_id, content,
     1 - (embedding <=> query_embedding) as similarity
-  from memories
+  from public.memories
   order by embedding <=> query_embedding
   limit match_count;
 $$;
 
-grant execute on function match_memories to anon;
+revoke all on function public.match_memories(vector, int) from public;
+grant execute on function public.match_memories(vector, int) to service_role;

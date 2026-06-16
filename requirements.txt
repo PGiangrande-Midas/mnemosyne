@@ -1,7 +1,9 @@
-anthropic
-supabase
-openai
-python-dotenv
-truststore
-fastapi
-uvicorn
+anthropic==0.105.2
+supabase==2.31.0
+openai==2.41.1
+python-dotenv==1.2.2
+truststore==0.10.4
+fastapi==0.136.3
+uvicorn==0.49.0
+# Metis observability layer (editable, not pinned here):
+#   pip install -e ../metis   # path to your local Metis checkout
