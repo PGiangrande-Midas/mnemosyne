@@ -4,13 +4,14 @@ import math
 import os
 import anthropic
 from dotenv import load_dotenv
+from metis import instrument
 
 from db.client import supabase
 from utils.embeddings import get_embedding
 
 load_dotenv()
 
-_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+_client = instrument(anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"]))
 
 _SYSTEM = (
     "You are a relationship retrieval agent for an M&A boutique. "

@@ -2,10 +2,11 @@ import json
 import os
 import anthropic
 from dotenv import load_dotenv
+from metis import instrument
 
 load_dotenv()
 
-_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+_client = instrument(anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"]))
 
 _SYSTEM = (
     "You are a contact extraction agent for an M&A relationship database. "
